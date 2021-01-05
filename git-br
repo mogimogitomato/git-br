@@ -37,7 +37,7 @@ if [[ -z $branch ]]; then
     exit 0
 fi
 
-current_branch=`git symbolic-ref --short HEAD &>/dev/null;`
+current_branch=`git symbolic-ref --short HEAD 2>/dev/null;`
 
 is_already_branched() { git branch | grep -q "${branch#*/*/}" &>/dev/null; }
 
@@ -45,23 +45,25 @@ if [[ $branch =~ ^remotes ]]; then
     if is_already_branched; then
         # already exists
         if $is_force; then
-            git checkout -q master
+            git switch -q master
             git branch -D "${branch#*/*/}"
-            git checkout -b "${branch#*/*/}" "${branch#*/}"
+            git switch -c "${branch#*/*/}" "${branch#*/}"
         else
-            git checkout "${branch#*/*/}"
+            git switch "${branch#*/*/}"
         fi
     else
-        git checkout -b "${branch#*/*/}" "${branch#*/}"
+        git switch -c "${branch#*/*/}" "${branch#*/}"
     fi
 else
     if is_already_branched; then
-        git checkout "$branch"
+        git switch "$branch"
     else
-        git checkout -b "$branch"
+        git switch -c "$branch"
     fi
 fi
 
-if [ -n $is_del_current_br ] && [ -n $current_branch ]; then
-    git branch -D $current_branch
+if $is_del_current_br; then
+    if [ -n "$current_branch" ]; then
+        git branch -D $current_branch
+    fi
 fi
