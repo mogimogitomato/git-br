@@ -3,6 +3,7 @@
 set -e
 
 is_force=false
+is_del_current_br=false
 
 while (( $# > 0 ))
 do
@@ -10,7 +11,10 @@ do
         -f)
             is_force=true
             ;;
-        -s|--sync)
+        -d)
+            is_del_current_br=true
+            ;;
+        -s)
             git fetch --prune --all
             git branch --merged \
                 | grep -v '^*' \
@@ -33,6 +37,8 @@ if [[ -z $branch ]]; then
     exit 0
 fi
 
+current_branch=`git symbolic-ref --short HEAD &>/dev/null;`
+
 is_already_branched() { git branch | grep -q "${branch#*/*/}" &>/dev/null; }
 
 if [[ $branch =~ ^remotes ]]; then
@@ -54,4 +60,8 @@ else
     else
         git checkout -b "$branch"
     fi
+fi
+
+if [ -n $is_del_current_br ] && [ -n $current_branch ]; then
+    git branch -D $current_branch
 fi
